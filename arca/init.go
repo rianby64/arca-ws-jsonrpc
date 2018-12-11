@@ -1,10 +1,12 @@
 package arca
 
 import (
-	"log"
 	"net/http"
 
+	Goods "../examples/goods"
+	Users "../examples/users"
 	"github.com/gorilla/websocket"
+	grid "github.com/rianby64/arca-grid"
 )
 
 // UpgradeConnection whatever
@@ -20,8 +22,8 @@ var WriteJSON func(conn *websocket.Conn, response *JSONRPCresponse) error
 // CloseConnection whatever
 var CloseConnection func(conn *websocket.Conn) error
 
-// ListenConnection whatever
-var ListenConnection func(conn *websocket.Conn, done chan error)
+// ListenAndResponse whatever
+var ListenAndResponse func(conn *websocket.Conn, done chan error)
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  64,
@@ -29,6 +31,49 @@ var upgrader = websocket.Upgrader{
 }
 
 func init() {
+	connections := map[*websocket.Conn]chan *JSONRPCresponse{}
+	goods := grid.Grid{}
+	users := grid.Grid{}
+
+	var queryGoods grid.RequestHandler = func(
+		requestParams *interface{},
+		context *interface{},
+		notify grid.NotifyCallback,
+	) (interface{}, error) {
+		result, _ := Goods.Read(requestParams, context)
+		var usersContext interface{} = map[string]string{
+			"source": "Users",
+		}
+		users.Query(requestParams, &usersContext)
+		return result, nil
+	}
+	goods.RegisterMethod("query", &queryGoods)
+
+	var queryUsers grid.RequestHandler = func(
+		requestParams *interface{},
+		context *interface{},
+		notify grid.NotifyCallback,
+	) (interface{}, error) {
+		result, _ := Users.Read(requestParams, context)
+		notify(result)
+		return result, nil
+	}
+	var usersListen grid.ListenCallback = func(
+		message interface{},
+		context interface{},
+	) {
+		var response JSONRPCresponse
+		response.Context = context
+		response.Method = "read"
+		response.Result = message
+
+		for _, chConn := range connections {
+			chConn <- &response
+		}
+	}
+	users.RegisterMethod("query", &queryUsers)
+	users.Listen(&usersListen)
+
 	UpgradeConnection = func(w http.ResponseWriter,
 		r *http.Request) (*websocket.Conn, error) {
 		return upgrader.Upgrade(w, r, nil)
@@ -37,46 +82,44 @@ func init() {
 		return conn.ReadJSON(&request)
 	}
 	WriteJSON = func(conn *websocket.Conn, response *JSONRPCresponse) error {
-		return conn.WriteJSON(*response)
+		return conn.WriteJSON(response)
 	}
 	CloseConnection = func(conn *websocket.Conn) error {
 		return conn.Close()
 	}
-	ListenConnection = func(conn *websocket.Conn, done chan error) {
+	ListenAndResponse = func(conn *websocket.Conn, done chan error) {
+		connections[conn] = make(chan *JSONRPCresponse)
+		go (func() {
+			for {
+				response := <-connections[conn]
+				go WriteJSON(conn, response)
+			}
+		})()
 		for {
 			var request JSONRPCrequest
 			if err := ReadJSON(conn, &request); err != nil {
 				done <- err
+				delete(connections, conn)
 				return
 			}
-			log.Println(request)
+
+			result, err := goods.Query(&request.Params, &request.Context)
+			if err != nil {
+				done <- err
+				delete(connections, conn)
+				return
+			}
+
+			var response JSONRPCresponse
+			response.Context = &request.Context
+			response.Method = request.Method
+			response.Result = result
+
+			// response
+			if len(request.ID) > 0 {
+				response.ID = request.ID
+			}
+			WriteJSON(conn, &response)
 		}
 	}
-}
-
-// JSONRPCBase is the base for both request and response structures
-type JSONRPCBase struct {
-	ID      string
-	Method  string
-	Context interface{}
-}
-
-// JSONRPCerror is the structure of JSON-RPC response
-type JSONRPCerror struct {
-	Code    int
-	Message string
-	Data    interface{}
-}
-
-// JSONRPCrequest is the structure of JSON-RPC request
-type JSONRPCrequest struct {
-	JSONRPCBase
-	Params interface{}
-}
-
-// JSONRPCresponse is the structure of JSON-RPC response
-type JSONRPCresponse struct {
-	JSONRPCBase
-	Result interface{}
-	Error  interface{}
 }

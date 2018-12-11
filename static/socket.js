@@ -8,9 +8,10 @@ conn.onmessage = (e) => {
 
 conn.onopen = () => {
     conn.send(JSON.stringify({
-        Method: 'subscribe',
+        Method: 'read',
+        ID: 'my-id',
         Context: {
-            source: "table1"
+            source: "Goods"
         }
     }));
 }
