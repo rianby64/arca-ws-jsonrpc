@@ -25,6 +25,12 @@ var CloseConnection func(conn *websocket.Conn) error
 // ListenAndResponse whatever
 var ListenAndResponse func(conn *websocket.Conn, done chan error)
 
+// Broadcast whatever
+var Broadcast func(response *JSONRPCresponse)
+
+// Answer whatever
+var Answer func(conn *websocket.Conn, response *JSONRPCresponse)
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  64,
 	WriteBufferSize: 64,
@@ -34,6 +40,7 @@ func init() {
 	connections := map[*websocket.Conn]chan *JSONRPCresponse{}
 	goods := grid.Grid{}
 	users := grid.Grid{}
+	tick := make(chan bool)
 
 	var queryGoods grid.RequestHandler = func(
 		requestParams *interface{},
@@ -66,10 +73,7 @@ func init() {
 		response.Context = context
 		response.Method = "read"
 		response.Result = message
-
-		for _, chConn := range connections {
-			chConn <- &response
-		}
+		Broadcast(&response)
 	}
 	users.RegisterMethod("query", &queryUsers)
 	users.Listen(&usersListen)
@@ -82,10 +86,20 @@ func init() {
 		return conn.ReadJSON(&request)
 	}
 	WriteJSON = func(conn *websocket.Conn, response *JSONRPCresponse) error {
-		return conn.WriteJSON(response)
+		err := conn.WriteJSON(response)
+		tick <- true
+		return err
 	}
 	CloseConnection = func(conn *websocket.Conn) error {
 		return conn.Close()
+	}
+	Broadcast = func(response *JSONRPCresponse) {
+		for _, conn := range connections {
+			conn <- response
+		}
+	}
+	Answer = func(conn *websocket.Conn, response *JSONRPCresponse) {
+		connections[conn] <- response
 	}
 	ListenAndResponse = func(conn *websocket.Conn, done chan error) {
 		connections[conn] = make(chan *JSONRPCresponse)
@@ -93,6 +107,7 @@ func init() {
 			for {
 				response := <-connections[conn]
 				go WriteJSON(conn, response)
+				<-tick
 			}
 		})()
 		for {
@@ -115,11 +130,11 @@ func init() {
 			response.Method = request.Method
 			response.Result = result
 
-			// response
 			if len(request.ID) > 0 {
 				response.ID = request.ID
 			}
-			WriteJSON(conn, &response)
+
+			Answer(conn, &response)
 		}
 	}
 }
