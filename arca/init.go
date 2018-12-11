@@ -38,10 +38,11 @@ var upgrader = websocket.Upgrader{
 
 func init() {
 	connections := map[*websocket.Conn]chan *JSONRPCresponse{}
-	goods := grid.Grid{}
-	users := grid.Grid{}
 	tick := make(chan bool)
 
+	// </move-all-this-code-somewhere-else>
+	goods := grid.Grid{}
+	users := grid.Grid{}
 	var queryGoods grid.RequestHandler = func(
 		requestParams *interface{},
 		context *interface{},
@@ -53,6 +54,7 @@ func init() {
 		}
 		users.Query(requestParams, &usersContext)
 		return result, nil
+		// if return something, it means it becomes the response
 	}
 	goods.RegisterMethod("query", &queryGoods)
 
@@ -73,11 +75,14 @@ func init() {
 		response.Context = context
 		response.Method = "read"
 		response.Result = message
-		Broadcast(&response)
+		Broadcast(&response) // this function MUST be preset in all the grids
 	}
 	users.RegisterMethod("query", &queryUsers)
 	users.Listen(&usersListen)
 
+	// </move-all-this-code-somewhere-else>
+
+	// all the functions below MUST be private
 	UpgradeConnection = func(w http.ResponseWriter,
 		r *http.Request) (*websocket.Conn, error) {
 		return upgrader.Upgrade(w, r, nil)
@@ -93,6 +98,7 @@ func init() {
 	CloseConnection = func(conn *websocket.Conn) error {
 		return conn.Close()
 	}
+	// but not this one. This MUST be public as we want the grids to use it
 	Broadcast = func(response *JSONRPCresponse) {
 		for _, conn := range connections {
 			conn <- response
@@ -101,6 +107,7 @@ func init() {
 	Answer = func(conn *websocket.Conn, response *JSONRPCresponse) {
 		connections[conn] <- response
 	}
+	// and also this one becase we want to bind it with the http handler
 	ListenAndResponse = func(conn *websocket.Conn, done chan error) {
 		connections[conn] = make(chan *JSONRPCresponse)
 		go (func() {
@@ -134,7 +141,7 @@ func init() {
 				response.ID = request.ID
 			}
 
-			Answer(conn, &response)
+			Answer(conn, &response) // how to tie up here the grids with methods?
 		}
 	}
 }
