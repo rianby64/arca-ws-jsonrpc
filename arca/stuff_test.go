@@ -154,3 +154,33 @@ func Test_tickResponse_2call(t *testing.T) {
 		t.Error("tick is open")
 	}
 }
+
+func Test_Broadcast(t *testing.T) {
+	t.Log("Test Broadcast redefinition")
+
+	s := *callInit(t)
+	conn1 := &websocket.Conn{}
+	s.connections[conn1] = make(chan *JSONRPCresponse)
+	conn2 := &websocket.Conn{}
+	s.connections[conn2] = make(chan *JSONRPCresponse)
+
+	expectedResponse := JSONRPCresponse{}
+	expectedResponse.Method = "method"
+	expectedResponse.ID = "an-id"
+
+	go s.Broadcast(&expectedResponse)
+
+	actualResponse1 := <-s.connections[conn1]
+	actualResponse2 := <-s.connections[conn2]
+
+	if expectedResponse.Method != actualResponse1.Method ||
+		expectedResponse.ID != actualResponse1.ID {
+		t.Error("expectedResponse differs from actualResponse1")
+	}
+
+	if expectedResponse.Method != actualResponse2.Method ||
+		expectedResponse.ID != actualResponse2.ID {
+		t.Error("expectedResponse differs from actualResponse2")
+	}
+
+}
