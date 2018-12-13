@@ -1,11 +1,34 @@
 package arca
 
 import (
+	"net/http"
+
 	Goods "../examples/goods"
 	Users "../examples/users"
 	"github.com/gorilla/websocket"
 	grid "github.com/rianby64/arca-grid"
 )
+
+func init() {
+	upgradeConnection = func(
+		w http.ResponseWriter,
+		r *http.Request,
+	) (*websocket.Conn, error) {
+		return upgrader.Upgrade(w, r, nil) // HARD-DEPENDENCY
+	}
+	readJSON = func(
+		conn *websocket.Conn,
+		request *JSONRPCrequest,
+	) error {
+		return conn.ReadJSON(&request) // HARD-DEPENDENCY
+	}
+	writeJSON = func(
+		conn *websocket.Conn,
+		response *JSONRPCresponse,
+	) error {
+		return conn.WriteJSON(response) // HARD-DEPENDENCY
+	}
+}
 
 // Init sets up the
 func (s *JSONRPCServerWS) Init() {
@@ -61,14 +84,15 @@ func (s *JSONRPCServerWS) Init() {
 			var request JSONRPCrequest
 			if err := s.readJSON(conn, &request); err != nil {
 				done <- err
-				delete(s.connections, conn)
+				s.closeConnection(conn)
 				return
 			}
 
+			// how to tie up here the grids with methods?
 			result, err := goods.Query(&request.Params, &request.Context)
 			if err != nil {
 				done <- err
-				delete(s.connections, conn)
+				s.closeConnection(conn)
 				return
 			}
 
@@ -81,7 +105,7 @@ func (s *JSONRPCServerWS) Init() {
 				response.ID = request.ID
 			}
 
-			s.Response(conn, &response) // how to tie up here the grids with methods?
+			s.Response(conn, &response)
 		}
 	}
 }

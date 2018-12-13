@@ -12,12 +12,27 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 64,
 }
 
+var upgradeConnection func(
+	w http.ResponseWriter,
+	r *http.Request,
+) (*websocket.Conn, error)
+
+var readJSON func(
+	conn *websocket.Conn,
+	request *JSONRPCrequest,
+) error
+
+var writeJSON func(
+	conn *websocket.Conn,
+	response *JSONRPCresponse,
+) error
+
 // Handle whatever
 func (s *JSONRPCServerWS) Handle(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	conn, err := s.upgradeConnection(w, r)
+	conn, err := upgradeConnection(w, r)
 	if err != nil {
 		log.Println("connecting", err)
 		return
@@ -28,25 +43,18 @@ func (s *JSONRPCServerWS) Handle(
 	log.Println(<-done)
 }
 
-func (s *JSONRPCServerWS) upgradeConnection(
-	w http.ResponseWriter,
-	r *http.Request,
-) (*websocket.Conn, error) {
-	return upgrader.Upgrade(w, r, nil)
-}
-
 func (s *JSONRPCServerWS) readJSON(
 	conn *websocket.Conn,
 	request *JSONRPCrequest,
 ) error {
-	return conn.ReadJSON(&request)
+	return readJSON(conn, request)
 }
 
 func (s *JSONRPCServerWS) writeJSON(
 	conn *websocket.Conn,
 	response *JSONRPCresponse,
 ) error {
-	err := conn.WriteJSON(response)
+	err := writeJSON(conn, response)
 	s.tick <- true
 	return err
 }
@@ -54,6 +62,7 @@ func (s *JSONRPCServerWS) writeJSON(
 func (s *JSONRPCServerWS) closeConnection(
 	conn *websocket.Conn,
 ) error {
+	delete(s.connections, conn)
 	return conn.Close()
 }
 
