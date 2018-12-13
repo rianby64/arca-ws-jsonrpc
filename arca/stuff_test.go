@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func callInit(t *testing.T) *JSONRPCServerWS {
+func createServer(t *testing.T) *JSONRPCServerWS {
 	s := JSONRPCServerWS{}
 	s.Init()
 
@@ -29,7 +29,7 @@ func Test_readJSON_redefinition(t *testing.T) {
 		return nil
 	}
 
-	s := *callInit(t)
+	s := *createServer(t)
 	s.readJSON(nil, nil)
 
 	if !readJSONCalled {
@@ -46,7 +46,7 @@ func Test_writeJSON_redefinition(t *testing.T) {
 		return nil
 	}
 
-	s := *callInit(t)
+	s := *createServer(t)
 	go s.writeJSON(nil, nil)
 	<-s.tick
 
@@ -64,7 +64,7 @@ func Test_closeConnection_redefinition(t *testing.T) {
 		return nil
 	}
 
-	s := *callInit(t)
+	s := *createServer(t)
 	conn := &websocket.Conn{}
 	s.connections[conn] = make(chan *JSONRPCresponse)
 	s.closeConnection(conn)
@@ -80,7 +80,7 @@ func Test_closeConnection_redefinition(t *testing.T) {
 
 func Test_tickResponse_1call(t *testing.T) {
 	t.Log("Test tickResponse when sending one response")
-	s := *callInit(t)
+	s := *createServer(t)
 	conn := &websocket.Conn{}
 	s.connections[conn] = make(chan *JSONRPCresponse)
 
@@ -110,7 +110,7 @@ func Test_tickResponse_1call(t *testing.T) {
 
 func Test_tickResponse_2call(t *testing.T) {
 	t.Log("Test tickResponse when sending two responses")
-	s := *callInit(t)
+	s := *createServer(t)
 	conn := &websocket.Conn{}
 	s.connections[conn] = make(chan *JSONRPCresponse)
 
@@ -158,7 +158,7 @@ func Test_tickResponse_2call(t *testing.T) {
 func Test_Broadcast(t *testing.T) {
 	t.Log("Test Broadcast redefinition")
 
-	s := *callInit(t)
+	s := *createServer(t)
 	conn1 := &websocket.Conn{}
 	s.connections[conn1] = make(chan *JSONRPCresponse)
 	conn2 := &websocket.Conn{}
