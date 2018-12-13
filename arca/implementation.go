@@ -118,7 +118,7 @@ func (s *JSONRPCServerWS) listenAndResponse(
 			return
 		}
 
-		result, err := s.matchMethod(&request.Params, &request.Context)
+		result, err := s.MatchMethod(&request.Params, &request.Context)
 		if err != nil {
 			done <- err
 			s.closeConnection(conn)
