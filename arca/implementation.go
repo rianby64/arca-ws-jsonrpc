@@ -66,19 +66,13 @@ func (s *JSONRPCServerWS) closeConnection(
 	return conn.Close()
 }
 
-// Broadcast whatever
-func (s *JSONRPCServerWS) Broadcast(response *JSONRPCresponse) {
+// Response whatever
+func (s *JSONRPCServerWS) Response(
+	response *JSONRPCresponse,
+) {
 	for _, conn := range s.connections {
 		conn <- response
 	}
-}
-
-// Response whatever
-func (s *JSONRPCServerWS) Response(
-	conn *websocket.Conn,
-	response *JSONRPCresponse,
-) {
-	s.connections[conn] <- response
 }
 
 func (s *JSONRPCServerWS) tickResponse(
@@ -89,5 +83,48 @@ func (s *JSONRPCServerWS) tickResponse(
 		go s.writeJSON(conn, response)
 		<-s.tick
 
+	}
+}
+
+func (s *JSONRPCServerWS) sendResponse(
+	conn *websocket.Conn,
+	request *JSONRPCrequest,
+	result *interface{},
+) {
+	var response JSONRPCresponse
+	response.Context = &request.Context
+	response.Method = request.Method
+	response.Result = result
+
+	if len(request.ID) > 0 {
+		response.ID = request.ID
+		s.connections[conn] <- &response
+	} else {
+		s.Response(&response)
+	}
+}
+
+func (s *JSONRPCServerWS) listenAndResponse(
+	conn *websocket.Conn,
+	done chan error,
+) {
+	s.connections[conn] = make(chan *JSONRPCresponse)
+	go s.tickResponse(conn)
+	for {
+		var request JSONRPCrequest
+		if err := s.readJSON(conn, &request); err != nil {
+			done <- err
+			s.closeConnection(conn)
+			return
+		}
+
+		result, err := s.matchMethod(&request.Params, &request.Context)
+		if err != nil {
+			done <- err
+			s.closeConnection(conn)
+			return
+		}
+
+		s.sendResponse(conn, &request, &result)
 	}
 }

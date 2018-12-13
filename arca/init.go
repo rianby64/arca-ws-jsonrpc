@@ -70,42 +70,11 @@ func (s *JSONRPCServerWS) Init() {
 		response.Context = context
 		response.Method = "read"
 		response.Result = message
-		s.Broadcast(&response) // this function MUST be preset in all the grids
+		s.Response(&response) // this function MUST be preset in all the grids
 	}
 	users.RegisterMethod("query", &queryUsers)
 	users.Listen(&usersListen)
 
+	s.matchMethod = goods.Query
 	// </move-all-this-code-somewhere-else>
-
-	s.listenAndResponse = func(conn *websocket.Conn, done chan error) {
-		s.connections[conn] = make(chan *JSONRPCresponse)
-		go s.tickResponse(conn)
-		for {
-			var request JSONRPCrequest
-			if err := s.readJSON(conn, &request); err != nil {
-				done <- err
-				s.closeConnection(conn)
-				return
-			}
-
-			// how to tie up here the grids with methods?
-			result, err := goods.Query(&request.Params, &request.Context)
-			if err != nil {
-				done <- err
-				s.closeConnection(conn)
-				return
-			}
-
-			var response JSONRPCresponse
-			response.Context = &request.Context
-			response.Method = request.Method
-			response.Result = result
-
-			if len(request.ID) > 0 {
-				response.ID = request.ID
-			}
-
-			s.Response(conn, &response)
-		}
-	}
 }

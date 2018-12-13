@@ -48,7 +48,10 @@ type DIRUD struct {
 
 // JSONRPCServerWS whatever
 type JSONRPCServerWS struct {
-	connections       map[*websocket.Conn]chan *JSONRPCresponse
-	tick              chan bool
-	listenAndResponse func(conn *websocket.Conn, done chan error)
+	connections map[*websocket.Conn]chan *JSONRPCresponse
+	tick        chan bool
+	matchMethod func(
+		requestParams *interface{},
+		context *interface{},
+	) (interface{}, error)
 }
