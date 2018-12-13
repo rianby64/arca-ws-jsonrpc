@@ -128,3 +128,9 @@ func (s *JSONRPCServerWS) listenAndResponse(
 		s.sendResponse(conn, &request, &result)
 	}
 }
+
+// Init sets up the
+func (s *JSONRPCServerWS) Init() {
+	s.connections = map[*websocket.Conn]chan *JSONRPCresponse{}
+	s.tick = make(chan bool)
+}

@@ -32,19 +32,10 @@ type JSONRPCresponse struct {
 }
 
 // JSONRequestHandler whatever
-type JSONRequestHandler func(requestParams *interface{},
-	context *interface{}) (interface{}, error)
-
-// DIRUD whatever
-// for a while, this struct will be something rigid. But later I'll
-// try to turn it into
-type DIRUD struct {
-	Describe JSONRequestHandler
-	Insert   JSONRequestHandler
-	Read     JSONRequestHandler
-	Update   JSONRequestHandler
-	Delete   JSONRequestHandler
-}
+type JSONRequestHandler func(
+	requestParams *interface{},
+	context *interface{},
+) (interface{}, error)
 
 // JSONRPCServerWS whatever
 type JSONRPCServerWS struct {

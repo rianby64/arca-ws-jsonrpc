@@ -26,9 +26,3 @@ func init() {
 		return conn.WriteJSON(response) // HARD-DEPENDENCY
 	}
 }
-
-// Init sets up the
-func (s *JSONRPCServerWS) Init() {
-	s.connections = map[*websocket.Conn]chan *JSONRPCresponse{}
-	s.tick = make(chan bool)
-}
