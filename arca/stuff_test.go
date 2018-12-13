@@ -184,6 +184,10 @@ func Test_Broadcast(t *testing.T) {
 		t.Error("expectedResponse differs from actualResponse2")
 	}
 
+	go (func() {
+		s.closeConnection(conn1)
+		s.closeConnection(conn2)
+	})()
 }
 
 func Test_sendResponse_with_ID(t *testing.T) {
@@ -206,6 +210,10 @@ func Test_sendResponse_with_ID(t *testing.T) {
 	if actualResult.(string) != expectedResult.(string) {
 		t.Error("expected result differs from actual result")
 	}
+
+	go (func() {
+		s.closeConnection(conn)
+	})()
 }
 
 func Test_sendResponse_without_ID(t *testing.T) {
@@ -237,6 +245,11 @@ func Test_sendResponse_without_ID(t *testing.T) {
 	if actualResult2.(string) != expectedResult.(string) {
 		t.Error("expected result differs from actual result")
 	}
+
+	go (func() {
+		s.closeConnection(conn1)
+		s.closeConnection(conn2)
+	})()
 }
 
 func Test_listenAndResponse_readJSON_returning_error(t *testing.T) {
