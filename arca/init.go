@@ -1,6 +1,7 @@
 package arca
 
 import (
+	"log"
 	"net/http"
 
 	Goods "../examples/goods"
@@ -9,27 +10,25 @@ import (
 	grid "github.com/rianby64/arca-grid"
 )
 
-// UpgradeConnection whatever
-var UpgradeConnection func(w http.ResponseWriter,
+var upgradeConnection func(w http.ResponseWriter,
 	r *http.Request) (*websocket.Conn, error)
 
-// ReadJSON whatever
-var ReadJSON func(conn *websocket.Conn, request *JSONRPCrequest) error
+var readJSON func(conn *websocket.Conn, request *JSONRPCrequest) error
 
-// WriteJSON whatever
-var WriteJSON func(conn *websocket.Conn, response *JSONRPCresponse) error
+var writeJSON func(conn *websocket.Conn, response *JSONRPCresponse) error
 
-// CloseConnection whatever
-var CloseConnection func(conn *websocket.Conn) error
+var closeConnection func(conn *websocket.Conn) error
 
-// ListenAndResponse whatever
-var ListenAndResponse func(conn *websocket.Conn, done chan error)
+var listenAndResponse func(conn *websocket.Conn, done chan error)
 
 // Broadcast whatever
 var Broadcast func(response *JSONRPCresponse)
 
-// Answer whatever
-var Answer func(conn *websocket.Conn, response *JSONRPCresponse)
+// Response whatever
+var Response func(conn *websocket.Conn, response *JSONRPCresponse)
+
+// Handle whatever
+var Handle func(w http.ResponseWriter, r *http.Request)
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  64,
@@ -39,6 +38,18 @@ var upgrader = websocket.Upgrader{
 func init() {
 	connections := map[*websocket.Conn]chan *JSONRPCresponse{}
 	tick := make(chan bool)
+
+	Handle = func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgradeConnection(w, r)
+		if err != nil {
+			log.Println("connecting", err)
+			return
+		}
+
+		done := make(chan error)
+		go listenAndResponse(conn, done)
+		log.Println(<-done)
+	}
 
 	// </move-all-this-code-somewhere-else>
 	goods := grid.Grid{}
@@ -83,19 +94,19 @@ func init() {
 	// </move-all-this-code-somewhere-else>
 
 	// all the functions below MUST be private
-	UpgradeConnection = func(w http.ResponseWriter,
+	upgradeConnection = func(w http.ResponseWriter,
 		r *http.Request) (*websocket.Conn, error) {
 		return upgrader.Upgrade(w, r, nil)
 	}
-	ReadJSON = func(conn *websocket.Conn, request *JSONRPCrequest) error {
+	readJSON = func(conn *websocket.Conn, request *JSONRPCrequest) error {
 		return conn.ReadJSON(&request)
 	}
-	WriteJSON = func(conn *websocket.Conn, response *JSONRPCresponse) error {
+	writeJSON = func(conn *websocket.Conn, response *JSONRPCresponse) error {
 		err := conn.WriteJSON(response)
 		tick <- true
 		return err
 	}
-	CloseConnection = func(conn *websocket.Conn) error {
+	closeConnection = func(conn *websocket.Conn) error {
 		return conn.Close()
 	}
 	// but not this one. This MUST be public as we want the grids to use it
@@ -104,22 +115,22 @@ func init() {
 			conn <- response
 		}
 	}
-	Answer = func(conn *websocket.Conn, response *JSONRPCresponse) {
+	Response = func(conn *websocket.Conn, response *JSONRPCresponse) {
 		connections[conn] <- response
 	}
 	// and also this one becase we want to bind it with the http handler
-	ListenAndResponse = func(conn *websocket.Conn, done chan error) {
+	listenAndResponse = func(conn *websocket.Conn, done chan error) {
 		connections[conn] = make(chan *JSONRPCresponse)
 		go (func() {
 			for {
 				response := <-connections[conn]
-				go WriteJSON(conn, response)
+				go writeJSON(conn, response)
 				<-tick
 			}
 		})()
 		for {
 			var request JSONRPCrequest
-			if err := ReadJSON(conn, &request); err != nil {
+			if err := readJSON(conn, &request); err != nil {
 				done <- err
 				delete(connections, conn)
 				return
@@ -141,7 +152,7 @@ func init() {
 				response.ID = request.ID
 			}
 
-			Answer(conn, &response) // how to tie up here the grids with methods?
+			Response(conn, &response) // how to tie up here the grids with methods?
 		}
 	}
 }
