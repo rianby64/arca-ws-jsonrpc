@@ -66,8 +66,8 @@ func (s *JSONRPCServerWS) closeConnection(
 	return conn.Close()
 }
 
-// Response whatever
-func (s *JSONRPCServerWS) Response(
+// Broadcast whatever
+func (s *JSONRPCServerWS) Broadcast(
 	response *JSONRPCresponse,
 ) {
 	for _, conn := range s.connections {
@@ -100,7 +100,7 @@ func (s *JSONRPCServerWS) sendResponse(
 		response.ID = request.ID
 		s.connections[conn] <- &response
 	} else {
-		s.Response(&response)
+		s.Broadcast(&response)
 	}
 }
 

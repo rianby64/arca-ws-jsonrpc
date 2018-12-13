@@ -28,7 +28,6 @@ func main() {
 		}
 		users.Query(requestParams, &usersContext)
 		return result, nil
-		// if return something, it means it becomes the response
 	}
 	goods.RegisterMethod("query", &queryGoods)
 
@@ -49,7 +48,7 @@ func main() {
 		response.Context = context
 		response.Method = "read"
 		response.Result = message
-		ws.Response(&response)
+		ws.Broadcast(&response)
 	}
 	users.RegisterMethod("query", &queryUsers)
 	users.Listen(&usersListen)
