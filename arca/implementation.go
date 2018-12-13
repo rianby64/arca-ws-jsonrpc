@@ -36,6 +36,10 @@ func (s *JSONRPCServerWS) Handle(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	if s.connections == nil ||
+		s.tick == nil {
+		s.Init()
+	}
 	conn, err := upgradeConnection(w, r)
 	if err != nil {
 		log.Println("connecting", err)

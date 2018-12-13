@@ -1,6 +1,8 @@
 package arca
 
 import (
+	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/gorilla/websocket"
@@ -265,4 +267,35 @@ func Test_sendResponse_without_ID(t *testing.T) {
 		s.closeConnection(conn1)
 		s.closeConnection(conn2)
 	})()
+}
+
+func Test_call_Init_from_Handle(t *testing.T) {
+	s := JSONRPCServerWS{}
+	setupGlobals()
+
+	closeConnection = func(conn *websocket.Conn) error {
+		return nil
+	}
+
+	expectedDone := errors.New("EOF")
+	done := make(chan bool)
+
+	upgradeConnection = func(
+		http.ResponseWriter,
+		*http.Request,
+	) (*websocket.Conn, error) {
+		done <- true
+		return nil, expectedDone
+	}
+
+	go s.Handle(nil, nil)
+	<-done
+
+	if s.tick == nil {
+		t.Error("Init() should initiate tick channel")
+	}
+
+	if s.connections == nil {
+		t.Error("Init() should initiate connections map")
+	}
 }
