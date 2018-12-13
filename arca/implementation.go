@@ -66,6 +66,9 @@ func (s *JSONRPCServerWS) writeJSON(
 func (s *JSONRPCServerWS) closeConnection(
 	conn *websocket.Conn,
 ) error {
+	go (func() {
+		s.connections[conn] <- nil
+	})()
 	delete(s.connections, conn)
 	return closeConnection(conn)
 }

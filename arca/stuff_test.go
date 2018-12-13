@@ -1,6 +1,7 @@
 package arca
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/gorilla/websocket"
@@ -235,5 +236,29 @@ func Test_sendResponse_without_ID(t *testing.T) {
 	}
 	if actualResult2.(string) != expectedResult.(string) {
 		t.Error("expected result differs from actual result")
+	}
+}
+
+func Test_listenAndResponse_readJSON_returning_error(t *testing.T) {
+	t.Log("Test listenAndResponse readJSON returning error")
+
+	s := *createServer(t)
+	conn := &websocket.Conn{}
+	done := make(chan error)
+	expectedDone := errors.New("EOF")
+
+	readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
+		return expectedDone
+	}
+
+	go s.listenAndResponse(conn, done)
+	err := <-done
+
+	_, ok := s.connections[conn]
+	if ok {
+		t.Error("conn souldn't be present in connections")
+	}
+	if err != expectedDone {
+		t.Error("unexpected done")
 	}
 }
