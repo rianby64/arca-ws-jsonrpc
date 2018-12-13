@@ -101,7 +101,7 @@ func (s *JSONRPCServerWS) sendResponse(
 	var response JSONRPCresponse
 	response.Context = &request.Context
 	response.Method = request.Method
-	response.Result = result
+	response.Result = *result
 
 	if len(request.ID) > 0 {
 		response.ID = request.ID
