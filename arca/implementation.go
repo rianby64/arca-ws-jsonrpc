@@ -84,9 +84,12 @@ func (s *JSONRPCServerWS) tickResponse(
 ) {
 	for {
 		response := <-s.connections[conn]
+		if response == nil {
+			s.tick <- false
+			break
+		}
 		go s.writeJSON(conn, response)
 		<-s.tick
-
 	}
 }
 
