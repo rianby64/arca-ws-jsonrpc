@@ -9,7 +9,9 @@ import (
 
 func main() {
 
-	http.HandleFunc("/ws", arca.Handle)
+	ws := arca.JSONRPCServerWS{}
+	ws.Init()
+	http.HandleFunc("/ws", ws.Handle)
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 
 	log.Println("Serving")
