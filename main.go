@@ -13,7 +13,7 @@ import (
 func main() {
 
 	ws := arca.JSONRPCServerWS{}
-	ws.Init()
+	ws.Init() // prevent this line. Make it automatic
 
 	goods := grid.Grid{}
 	users := grid.Grid{}
