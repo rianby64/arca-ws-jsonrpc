@@ -7,6 +7,9 @@ import (
 )
 
 func init() {
+	setupGlobals()
+}
+func setupGlobals() {
 	upgradeConnection = func(
 		w http.ResponseWriter,
 		r *http.Request,
