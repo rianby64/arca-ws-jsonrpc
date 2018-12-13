@@ -27,6 +27,10 @@ var writeJSON func(
 	response *JSONRPCresponse,
 ) error
 
+var closeConnection func(
+	conn *websocket.Conn,
+) error
+
 // Handle whatever
 func (s *JSONRPCServerWS) Handle(
 	w http.ResponseWriter,
@@ -63,7 +67,7 @@ func (s *JSONRPCServerWS) closeConnection(
 	conn *websocket.Conn,
 ) error {
 	delete(s.connections, conn)
-	return conn.Close()
+	return closeConnection(conn)
 }
 
 // Broadcast whatever

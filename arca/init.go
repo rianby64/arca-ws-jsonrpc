@@ -25,4 +25,9 @@ func init() {
 	) error {
 		return conn.WriteJSON(response) // HARD-DEPENDENCY
 	}
+	closeConnection = func(
+		conn *websocket.Conn,
+	) error {
+		return conn.Close() // HARD-DEPENDENCY
+	}
 }
