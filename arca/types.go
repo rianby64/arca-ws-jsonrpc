@@ -39,7 +39,7 @@ type JSONRequestHandler func(
 
 // JSONRPCServerWS whatever
 type JSONRPCServerWS struct {
-	connections  map[*websocket.Conn]chan *JSONRPCresponse
-	tick         chan bool
-	matchHandler func(*JSONRPCrequest) (*JSONRequestHandler, error)
+	connections    map[*websocket.Conn]chan *JSONRPCresponse
+	tick           chan bool
+	handlerMatched JSONRequestHandler
 }

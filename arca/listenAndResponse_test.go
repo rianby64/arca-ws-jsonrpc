@@ -51,15 +51,13 @@ func Test_listenAndResponse_matchHandler_error(t *testing.T) {
 		return nil
 	}
 
-	s.matchHandler = func(request *JSONRPCrequest) (*JSONRequestHandler, error) {
-		var handler JSONRequestHandler = func(
-			*interface{},
-			*interface{},
-		) (interface{}, error) {
-			return nil, expectedDone
-		}
-		return &handler, nil
+	var handler JSONRequestHandler = func(
+		*interface{},
+		*interface{},
+	) (interface{}, error) {
+		return nil, expectedDone
 	}
+	s.handlerMatched = handler
 
 	go s.listenAndResponse(conn, done)
 	err := <-done
@@ -102,13 +100,14 @@ func Test_listenAndResponse_readJSON_matchHandler_OK(t *testing.T) {
 		return nil
 	}
 
-	s.matchHandler = func(request *JSONRPCrequest) (*JSONRequestHandler, error) {
-		var handler JSONRequestHandler = func(*interface{}, *interface{}) (interface{}, error) {
-			var result interface{} = expectedResult
-			return result, nil
-		}
-		return &handler, nil
+	var handler JSONRequestHandler = func(
+		*interface{},
+		*interface{},
+	) (interface{}, error) {
+		var result interface{} = expectedResult
+		return result, nil
 	}
+	s.handlerMatched = handler
 
 	go s.listenAndResponse(conn, done)
 	err := <-done
