@@ -5,7 +5,8 @@ import "fmt"
 func (s *JSONRPCServerWS) matchHandler(
 	request *JSONRPCrequest,
 ) (*JSONRequestHandler, error) {
-	if request.Method == "" {
+	method := request.Method
+	if method == "" {
 		return nil, fmt.Errorf("Method must be present in request")
 	}
 	if request.Context == nil {
@@ -23,5 +24,14 @@ func (s *JSONRPCServerWS) matchHandler(
 		return nil, fmt.Errorf(
 			"Context has an incorrect source expecting an string")
 	}
-	return s.handlers[source][request.Method], nil
+	if source == "" {
+		return nil, fmt.Errorf(
+			"Source '%s' in Context must be a defined string", source)
+	}
+	handler := s.handlers[source][method]
+	if handler == nil {
+		return nil, fmt.Errorf(
+			"handler for source '%s' and method '%s' is nil", source, method)
+	}
+	return handler, nil
 }
