@@ -34,7 +34,9 @@ func Test_Handle_upgradeConnection_OK(t *testing.T) {
 			return expectedDone
 		}
 		alreadyReadedJSON = true
+		var context interface{} = map[string]interface{}{"source": "whatever"}
 		request.Method = "method"
+		request.Context = context
 		request.ID = "my-id"
 		return nil
 	}

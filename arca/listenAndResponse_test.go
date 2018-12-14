@@ -46,8 +46,17 @@ func Test_listenAndResponse_matchHandler_error(t *testing.T) {
 	conn := &websocket.Conn{}
 	done := make(chan error)
 	expectedDone := errors.New("EOF")
+	alreadyReadedJSON := false
 
 	readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
+		if alreadyReadedJSON {
+			return expectedDone
+		}
+		alreadyReadedJSON = true
+		var context interface{} = map[string]interface{}{"source": "whatever"}
+		request.Context = context
+		request.Method = "method"
+		request.ID = "my-id"
 		return nil
 	}
 
@@ -90,6 +99,8 @@ func Test_listenAndResponse_readJSON_matchHandler_OK(t *testing.T) {
 			return expectedDone
 		}
 		alreadyReadedJSON = true
+		var context interface{} = map[string]interface{}{"source": "whatever"}
+		request.Context = context
 		request.Method = "method"
 		request.ID = "my-id"
 		return nil
