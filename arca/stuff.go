@@ -1,7 +1,6 @@
 package arca
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -30,26 +29,6 @@ var writeJSON func(
 var closeConnection func(
 	conn *websocket.Conn,
 ) error
-
-// Handle whatever
-func (s *JSONRPCServerWS) Handle(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	if s.connections == nil ||
-		s.tick == nil {
-		s.Init()
-	}
-	conn, err := upgradeConnection(w, r)
-	if err != nil {
-		log.Println("connecting", err)
-		return
-	}
-
-	done := make(chan error)
-	go s.listenAndResponse(conn, done)
-	log.Println(<-done)
-}
 
 func (s *JSONRPCServerWS) readJSON(
 	conn *websocket.Conn,
@@ -116,41 +95,4 @@ func (s *JSONRPCServerWS) sendResponse(
 	} else {
 		s.Broadcast(&response)
 	}
-}
-
-func (s *JSONRPCServerWS) listenAndResponse(
-	conn *websocket.Conn,
-	done chan error,
-) {
-	s.connections[conn] = make(chan *JSONRPCresponse)
-	go s.tickResponse(conn)
-	for {
-		var request JSONRPCrequest
-		if err := s.readJSON(conn, &request); err != nil {
-			done <- err
-			s.closeConnection(conn)
-			return
-		}
-
-		handler, err := s.matchHandler(&request)
-		if err != nil {
-			done <- err
-			s.closeConnection(conn)
-			return
-		}
-		result, err := (*handler)(&request.Params, &request.Context)
-		if err != nil {
-			done <- err
-			s.closeConnection(conn)
-			return
-		}
-
-		s.sendResponse(conn, &request, &result)
-	}
-}
-
-// Init sets up the
-func (s *JSONRPCServerWS) Init() {
-	s.connections = map[*websocket.Conn]chan *JSONRPCresponse{}
-	s.tick = make(chan bool)
 }

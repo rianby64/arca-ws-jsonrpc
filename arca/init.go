@@ -34,3 +34,9 @@ func setupGlobals() {
 		return conn.Close() // HARD-DEPENDENCY
 	}
 }
+
+// Init sets up the
+func (s *JSONRPCServerWS) Init() {
+	s.connections = map[*websocket.Conn]chan *JSONRPCresponse{}
+	s.tick = make(chan bool)
+}
