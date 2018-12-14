@@ -136,7 +136,7 @@ func Test_matchHandler_request_with_Context_with_empty_source(t *testing.T) {
 }
 
 func Test_matchHandler_request_with_Context_with_source_but_nil_handler(t *testing.T) {
-	t.Log("Match a handler fails if context defined in request contains an empty source")
+	t.Log("Match a handler fails if context with source defined in request is a nil handler")
 
 	s := *createServer(t)
 	closeConnection = func(conn *websocket.Conn) error {
