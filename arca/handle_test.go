@@ -35,8 +35,8 @@ func Test_Handle_upgradeConnection_OK(t *testing.T) {
 		}
 		alreadyReadedJSON = true
 		var context interface{} = map[string]interface{}{"source": "whatever"}
-		request.Method = "method"
 		request.Context = context
+		request.Method = "method"
 		request.ID = "my-id"
 		return nil
 	}
@@ -54,7 +54,11 @@ func Test_Handle_upgradeConnection_OK(t *testing.T) {
 		var result interface{} = expectedResult
 		return result, nil
 	}
-	s.handlerMatched = handler
+	s.handlers = map[string]map[string]*JSONRequestHandler{
+		"whatever": map[string]*JSONRequestHandler{
+			"method": &handler,
+		},
+	}
 
 	go s.Handle(nil, nil)
 	<-done
@@ -98,7 +102,11 @@ func Test_Handle_upgradeConnection_error(t *testing.T) {
 		t.Error("handler method must be unreachable")
 		return nil, nil
 	}
-	s.handlerMatched = handler
+	s.handlers = map[string]map[string]*JSONRequestHandler{
+		"whatever": map[string]*JSONRequestHandler{
+			"method": &handler,
+		},
+	}
 
 	s.Handle(nil, nil)
 }

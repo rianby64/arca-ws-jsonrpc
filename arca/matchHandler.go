@@ -18,10 +18,10 @@ func (s *JSONRPCServerWS) matchHandler(
 	if contextRequest["source"] == nil {
 		return nil, fmt.Errorf("Context must define a source")
 	}
-	_, ok = contextRequest["source"].(string)
+	source, ok := contextRequest["source"].(string)
 	if !ok {
 		return nil, fmt.Errorf(
 			"Context has an incorrect source expecting an string")
 	}
-	return &s.handlerMatched, nil
+	return s.handlers[source][request.Method], nil
 }

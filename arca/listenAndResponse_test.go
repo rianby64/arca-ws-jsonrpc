@@ -66,7 +66,11 @@ func Test_listenAndResponse_matchHandler_error(t *testing.T) {
 	) (interface{}, error) {
 		return nil, expectedDone
 	}
-	s.handlerMatched = handler
+	s.handlers = map[string]map[string]*JSONRequestHandler{
+		"whatever": map[string]*JSONRequestHandler{
+			"method": &handler,
+		},
+	}
 
 	go s.listenAndResponse(conn, done)
 	err := <-done
@@ -118,7 +122,11 @@ func Test_listenAndResponse_readJSON_matchHandler_OK(t *testing.T) {
 		var result interface{} = expectedResult
 		return result, nil
 	}
-	s.handlerMatched = handler
+	s.handlers = map[string]map[string]*JSONRequestHandler{
+		"whatever": map[string]*JSONRequestHandler{
+			"method": &handler,
+		},
+	}
 
 	go s.listenAndResponse(conn, done)
 	err := <-done
