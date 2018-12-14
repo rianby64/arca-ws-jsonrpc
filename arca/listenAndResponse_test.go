@@ -35,8 +35,8 @@ func Test_listenAndResponse_readJSON_returning_error(t *testing.T) {
 	}
 }
 
-func Test_listenAndResponse_MatchMethod_error(t *testing.T) {
-	t.Log("Test listenAndResponse MatchMethod error")
+func Test_listenAndResponse_matchHandler_error(t *testing.T) {
+	t.Log("Test listenAndResponse matchHandler error")
 
 	s := *createServer(t)
 	closeConnection = func(conn *websocket.Conn) error {
@@ -51,8 +51,14 @@ func Test_listenAndResponse_MatchMethod_error(t *testing.T) {
 		return nil
 	}
 
-	s.MatchMethod = func(*interface{}, *interface{}) (interface{}, error) {
-		return nil, expectedDone
+	s.matchHandler = func(request *JSONRPCrequest) (*JSONRequestHandler, error) {
+		var handler JSONRequestHandler = func(
+			*interface{},
+			*interface{},
+		) (interface{}, error) {
+			return nil, expectedDone
+		}
+		return &handler, nil
 	}
 
 	go s.listenAndResponse(conn, done)
@@ -66,8 +72,8 @@ func Test_listenAndResponse_MatchMethod_error(t *testing.T) {
 		t.Error("unexpected done")
 	}
 }
-func Test_listenAndResponse_readJSON_MatchMethod_OK(t *testing.T) {
-	t.Log("Test listenAndResponse readJSON MatchMethod OK")
+func Test_listenAndResponse_readJSON_matchHandler_OK(t *testing.T) {
+	t.Log("Test listenAndResponse readJSON matchHandler OK")
 
 	s := *createServer(t)
 	closeConnection = func(conn *websocket.Conn) error {
@@ -96,9 +102,12 @@ func Test_listenAndResponse_readJSON_MatchMethod_OK(t *testing.T) {
 		return nil
 	}
 
-	s.MatchMethod = func(*interface{}, *interface{}) (interface{}, error) {
-		var result interface{} = expectedResult
-		return result, nil
+	s.matchHandler = func(request *JSONRPCrequest) (*JSONRequestHandler, error) {
+		var handler JSONRequestHandler = func(*interface{}, *interface{}) (interface{}, error) {
+			var result interface{} = expectedResult
+			return result, nil
+		}
+		return &handler, nil
 	}
 
 	go s.listenAndResponse(conn, done)

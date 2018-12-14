@@ -45,9 +45,15 @@ func Test_Handle_upgradeConnection_OK(t *testing.T) {
 		return nil
 	}
 
-	s.MatchMethod = func(*interface{}, *interface{}) (interface{}, error) {
-		var result interface{} = expectedResult
-		return result, nil
+	s.matchHandler = func(request *JSONRPCrequest) (*JSONRequestHandler, error) {
+		var handler JSONRequestHandler = func(
+			*interface{},
+			*interface{},
+		) (interface{}, error) {
+			var result interface{} = expectedResult
+			return result, nil
+		}
+		return &handler, nil
 	}
 
 	go s.Handle(nil, nil)
@@ -85,9 +91,16 @@ func Test_Handle_upgradeConnection_error(t *testing.T) {
 		return nil
 	}
 
-	s.MatchMethod = func(*interface{}, *interface{}) (interface{}, error) {
-		t.Error("MatchMethod must be unreachable")
-		return nil, nil
+	s.matchHandler = func(request *JSONRPCrequest) (*JSONRequestHandler, error) {
+		t.Error("matchHandler must be unreachable")
+		var handler JSONRequestHandler = func(
+			*interface{},
+			*interface{},
+		) (interface{}, error) {
+			t.Error("handler method must be unreachable")
+			return nil, nil
+		}
+		return &handler, nil
 	}
 
 	s.Handle(nil, nil)

@@ -132,7 +132,13 @@ func (s *JSONRPCServerWS) listenAndResponse(
 			return
 		}
 
-		result, err := s.MatchMethod(&request.Params, &request.Context)
+		handler, err := s.matchHandler(&request)
+		if err != nil {
+			done <- err
+			s.closeConnection(conn)
+			return
+		}
+		result, err := (*handler)(&request.Params, &request.Context)
 		if err != nil {
 			done <- err
 			s.closeConnection(conn)
