@@ -269,8 +269,9 @@ func Test_sendResponse_without_ID(t *testing.T) {
 }
 
 func Test_call_Init_from_Handle(t *testing.T) {
-	s := JSONRPCServerWS{}
+	t.Log("Test call Init from Handle")
 
+	s := JSONRPCServerWS{}
 	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
