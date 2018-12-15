@@ -3,6 +3,7 @@ package arca
 import (
 	"errors"
 	"net/http"
+	"sync"
 	"testing"
 
 	"github.com/gorilla/websocket"
@@ -167,6 +168,8 @@ func Test_Broadcast(t *testing.T) {
 		return nil
 	}
 
+	wg := sync.WaitGroup{}
+	wg.Add(2)
 	conn1 := &websocket.Conn{}
 	s.connections[conn1] = make(chan *JSONRPCresponse)
 	conn2 := &websocket.Conn{}
@@ -178,8 +181,18 @@ func Test_Broadcast(t *testing.T) {
 
 	go s.Broadcast(&expectedResponse)
 
-	actualResponse1 := <-s.connections[conn1]
-	actualResponse2 := <-s.connections[conn2]
+	var actualResponse1 *JSONRPCresponse
+	go (func() {
+		actualResponse1 = <-s.connections[conn1]
+		wg.Done()
+	})()
+
+	var actualResponse2 *JSONRPCresponse
+	go (func() {
+		actualResponse2 = <-s.connections[conn2]
+		wg.Done()
+	})()
+	wg.Wait()
 
 	if expectedResponse.Method != actualResponse1.Method ||
 		expectedResponse.ID != actualResponse1.ID {
@@ -235,6 +248,9 @@ func Test_sendResponse_without_ID(t *testing.T) {
 		return nil
 	}
 
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
 	conn1 := &websocket.Conn{}
 	conn2 := &websocket.Conn{}
 
@@ -249,11 +265,22 @@ func Test_sendResponse_without_ID(t *testing.T) {
 
 	go s.sendResponse(nil, &request, &expectedResult)
 
-	response1 := <-s.connections[conn1]
-	actualResult1 := response1.Result
+	var response1 *JSONRPCresponse
+	var actualResult1 interface{}
+	go (func() {
+		response1 = <-s.connections[conn1]
+		actualResult1 = response1.Result
+		wg.Done()
+	})()
 
-	response2 := <-s.connections[conn2]
-	actualResult2 := response2.Result
+	var response2 *JSONRPCresponse
+	var actualResult2 interface{}
+	go (func() {
+		response2 = <-s.connections[conn2]
+		actualResult2 = response2.Result
+		wg.Done()
+	})()
+	wg.Wait()
 
 	if actualResult1.(string) != expectedResult.(string) {
 		t.Error("expected result differs from actual result")

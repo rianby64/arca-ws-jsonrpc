@@ -23,9 +23,7 @@ func (s *JSONRPCServerWS) writeJSON(
 func (s *JSONRPCServerWS) closeConnection(
 	conn *websocket.Conn,
 ) error {
-	go (func() {
-		s.connections[conn] <- nil
-	})()
+	close(s.connections[conn])
 	delete(s.connections, conn)
 	return s.transport.closeConnection(conn)
 }
@@ -43,8 +41,8 @@ func (s *JSONRPCServerWS) tickResponse(
 	conn *websocket.Conn,
 ) {
 	for {
-		response := <-s.connections[conn]
-		if response == nil {
+		response, ok := <-s.connections[conn]
+		if response == nil || !ok {
 			s.tick <- false
 			break
 		}
