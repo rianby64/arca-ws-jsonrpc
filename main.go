@@ -52,7 +52,8 @@ func main() {
 	users.RegisterMethod("query", &queryUsers)
 	users.Listen(&usersListen)
 
-	ws.MatchMethod = goods.Query
+	var queryHandler arca.JSONRequestHandler = goods.Query
+	ws.RegisterMethod("Goods", "read", &queryHandler)
 
 	http.HandleFunc("/ws", ws.Handle)
 	http.Handle("/", http.FileServer(http.Dir("./static")))

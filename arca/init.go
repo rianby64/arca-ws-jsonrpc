@@ -14,8 +14,10 @@ var upgrader = websocket.Upgrader{
 // Init sets up the
 func (s *JSONRPCServerWS) Init() {
 	s.connections = map[*websocket.Conn]chan *JSONRPCresponse{}
-	s.handlers = map[string]map[string]*JSONRequestHandler{}
 	s.tick = make(chan bool)
+	if s.handlers == nil {
+		s.handlers = map[string]map[string]*JSONRequestHandler{}
+	}
 
 	if s.transport.upgradeConnection == nil {
 		s.transport.upgradeConnection = func(

@@ -19,6 +19,9 @@ func (s *JSONRPCServerWS) RegisterMethod(
 		return fmt.Errorf(
 			"A method must be a defined string")
 	}
+	if s.handlers == nil {
+		s.handlers = map[string]map[string]*JSONRequestHandler{}
+	}
 	if s.handlers[source] == nil {
 		s.handlers[source] = map[string]*JSONRequestHandler{}
 	}

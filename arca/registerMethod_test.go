@@ -52,8 +52,26 @@ func Test_registerMethod_without_method(t *testing.T) {
 	}
 }
 
+func Test_registerMethod_no_Init(t *testing.T) {
+	t.Log("RegisterMethod success without calling Init")
+
+	s := JSONRPCServerWS{}
+	var handler JSONRequestHandler = func(
+		requestParams *interface{},
+		context *interface{},
+	) (interface{}, error) {
+		return nil, nil
+	}
+
+	err := s.RegisterMethod("source", "method", &handler)
+	t.Log(err)
+	if err != nil {
+		t.Error("unexpected error")
+	}
+}
+
 func Test_registerMethod_OK(t *testing.T) {
-	t.Log("RegisterMethod fails if no method defined in request")
+	t.Log("RegisterMethod success")
 
 	s := *createServer(t)
 	var handler JSONRequestHandler = func(
