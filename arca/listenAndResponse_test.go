@@ -11,7 +11,7 @@ func Test_listenAndResponse_readJSON_returning_error(t *testing.T) {
 	t.Log("Test listenAndResponse readJSON returning error")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 
@@ -19,7 +19,7 @@ func Test_listenAndResponse_readJSON_returning_error(t *testing.T) {
 	done := make(chan error)
 	expectedDone := errors.New("EOF")
 
-	readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
+	s.transport.readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
 		return expectedDone
 	}
 
@@ -39,7 +39,7 @@ func Test_listenAndResponse_matchHandler_error(t *testing.T) {
 	t.Log("Test listenAndResponse matchHandler error")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 
@@ -48,7 +48,7 @@ func Test_listenAndResponse_matchHandler_error(t *testing.T) {
 	expectedDone := errors.New("EOF")
 	alreadyReadedJSON := false
 
-	readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
+	s.transport.readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
 		if alreadyReadedJSON {
 			return expectedDone
 		}
@@ -88,7 +88,7 @@ func Test_listenAndResponse_matchHandler_with_nil_handler_error(t *testing.T) {
 	t.Log("Test listenAndResponse matchHandler with nil handler ends up in error")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 
@@ -97,7 +97,7 @@ func Test_listenAndResponse_matchHandler_with_nil_handler_error(t *testing.T) {
 	expectedDone := errors.New("EOF")
 	alreadyReadedJSON := false
 
-	readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
+	s.transport.readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
 		if alreadyReadedJSON {
 			return expectedDone
 		}
@@ -131,7 +131,7 @@ func Test_listenAndResponse_readJSON_matchHandler_OK(t *testing.T) {
 	t.Log("Test listenAndResponse readJSON matchHandler OK")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 
@@ -142,7 +142,7 @@ func Test_listenAndResponse_readJSON_matchHandler_OK(t *testing.T) {
 	var actualResult string
 	alreadyReadedJSON := false
 
-	readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
+	s.transport.readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
 		if alreadyReadedJSON {
 			return expectedDone
 		}
@@ -154,7 +154,7 @@ func Test_listenAndResponse_readJSON_matchHandler_OK(t *testing.T) {
 		return nil
 	}
 
-	writeJSON = func(_ *websocket.Conn, response *JSONRPCresponse) error {
+	s.transport.writeJSON = func(_ *websocket.Conn, response *JSONRPCresponse) error {
 		actualResult = response.Result.(string)
 		return nil
 	}

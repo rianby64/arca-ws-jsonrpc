@@ -10,7 +10,7 @@ func Test_matchHandler_request_without_Method(t *testing.T) {
 	t.Log("Match a handler fails if no method defined in request")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 	request := &JSONRPCrequest{}
@@ -30,7 +30,7 @@ func Test_matchHandler_request_without_Context(t *testing.T) {
 	t.Log("Match a handler fails if no context defined in request")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 	request := &JSONRPCrequest{}
@@ -51,7 +51,7 @@ func Test_matchHandler_request_with_incorrect_Context(t *testing.T) {
 	t.Log("Match a handler fails if context defined in request is not an object")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 	request := &JSONRPCrequest{}
@@ -73,7 +73,7 @@ func Test_matchHandler_request_with_Context_without_source(t *testing.T) {
 	t.Log("Match a handler fails if context defined in request doesn't contain a source")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 	request := &JSONRPCrequest{}
@@ -95,7 +95,7 @@ func Test_matchHandler_request_with_Context_with_incorrect_source(t *testing.T) 
 	t.Log("Match a handler fails if context defined in request contains an incorrect source")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 	request := &JSONRPCrequest{}
@@ -117,7 +117,7 @@ func Test_matchHandler_request_with_Context_with_empty_source(t *testing.T) {
 	t.Log("Match a handler fails if context defined in request contains an empty source")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 	request := &JSONRPCrequest{}
@@ -139,7 +139,7 @@ func Test_matchHandler_request_with_Context_with_source_but_nil_handler(t *testi
 	t.Log("Match a handler fails if context with source defined in request is a nil handler")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 	request := &JSONRPCrequest{}

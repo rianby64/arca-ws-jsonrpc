@@ -12,7 +12,7 @@ func Test_Handle_upgradeConnection_OK(t *testing.T) {
 	t.Log("Test Handle function")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 
@@ -22,14 +22,14 @@ func Test_Handle_upgradeConnection_OK(t *testing.T) {
 	var actualResult string
 	alreadyReadedJSON := false
 
-	upgradeConnection = func(
+	s.transport.upgradeConnection = func(
 		http.ResponseWriter,
 		*http.Request,
 	) (*websocket.Conn, error) {
 		return &websocket.Conn{}, nil
 	}
 
-	readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
+	s.transport.readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
 		if alreadyReadedJSON {
 			return expectedDone
 		}
@@ -41,7 +41,7 @@ func Test_Handle_upgradeConnection_OK(t *testing.T) {
 		return nil
 	}
 
-	writeJSON = func(_ *websocket.Conn, response *JSONRPCresponse) error {
+	s.transport.writeJSON = func(_ *websocket.Conn, response *JSONRPCresponse) error {
 		actualResult = response.Result.(string)
 		done <- true
 		return nil
@@ -72,25 +72,25 @@ func Test_Handle_upgradeConnection_error(t *testing.T) {
 	t.Log("Test Handle function")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 
 	expectedDone := errors.New("EOF")
 
-	upgradeConnection = func(
+	s.transport.upgradeConnection = func(
 		http.ResponseWriter,
 		*http.Request,
 	) (*websocket.Conn, error) {
 		return nil, expectedDone
 	}
 
-	readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
+	s.transport.readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
 		t.Error("readJSON must be unreachable")
 		return nil
 	}
 
-	writeJSON = func(_ *websocket.Conn, response *JSONRPCresponse) error {
+	s.transport.writeJSON = func(_ *websocket.Conn, response *JSONRPCresponse) error {
 		t.Error("writeJSON must be unreachable")
 		return nil
 	}

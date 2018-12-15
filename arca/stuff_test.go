@@ -10,7 +10,6 @@ import (
 
 func createServer(t *testing.T) *JSONRPCServerWS {
 	s := JSONRPCServerWS{}
-	setupGlobals()
 	s.Init()
 
 	if s.tick == nil {
@@ -28,7 +27,7 @@ func Test_readJSON_redefinition(t *testing.T) {
 
 	s := *createServer(t)
 	readJSONCalled := false
-	readJSON = func(*websocket.Conn, *JSONRPCrequest) error {
+	s.transport.readJSON = func(*websocket.Conn, *JSONRPCrequest) error {
 		readJSONCalled = true
 		return nil
 	}
@@ -45,7 +44,7 @@ func Test_writeJSON_redefinition(t *testing.T) {
 
 	s := *createServer(t)
 	writeJSONCalled := false
-	writeJSON = func(*websocket.Conn, *JSONRPCresponse) error {
+	s.transport.writeJSON = func(*websocket.Conn, *JSONRPCresponse) error {
 		writeJSONCalled = true
 		return nil
 	}
@@ -63,7 +62,7 @@ func Test_closeConnection_redefinition(t *testing.T) {
 
 	s := *createServer(t)
 	closeConnectionCalled := false
-	closeConnection = func(*websocket.Conn) error {
+	s.transport.closeConnection = func(*websocket.Conn) error {
 		closeConnectionCalled = true
 		return nil
 	}
@@ -93,7 +92,7 @@ func Test_tickResponse_1call(t *testing.T) {
 	expectedResponse.Method = "method"
 	expectedResponse.ID = "an-id"
 
-	writeJSON = func(_ *websocket.Conn, response *JSONRPCresponse) error {
+	s.transport.writeJSON = func(_ *websocket.Conn, response *JSONRPCresponse) error {
 		actualResponse = *response
 		return nil
 	}
@@ -129,7 +128,7 @@ func Test_tickResponse_2call(t *testing.T) {
 	expectedResponse2.Method = "method-1"
 	expectedResponse2.ID = "2"
 
-	writeJSON = func(_ *websocket.Conn, response *JSONRPCresponse) error {
+	s.transport.writeJSON = func(_ *websocket.Conn, response *JSONRPCresponse) error {
 		ID := (*response).ID
 		if ID == "1" {
 			actualResponse1 = *response
@@ -164,7 +163,7 @@ func Test_Broadcast(t *testing.T) {
 	t.Log("Test Broadcast")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 
@@ -202,7 +201,7 @@ func Test_sendResponse_with_ID(t *testing.T) {
 	t.Log("Test sendResponse with ID")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 
@@ -232,7 +231,7 @@ func Test_sendResponse_without_ID(t *testing.T) {
 	t.Log("Test sendResponse with ID")
 
 	s := *createServer(t)
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 
@@ -271,16 +270,15 @@ func Test_sendResponse_without_ID(t *testing.T) {
 
 func Test_call_Init_from_Handle(t *testing.T) {
 	s := JSONRPCServerWS{}
-	setupGlobals()
 
-	closeConnection = func(conn *websocket.Conn) error {
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 
 	expectedDone := errors.New("EOF")
 	done := make(chan bool)
 
-	upgradeConnection = func(
+	s.transport.upgradeConnection = func(
 		http.ResponseWriter,
 		*http.Request,
 	) (*websocket.Conn, error) {

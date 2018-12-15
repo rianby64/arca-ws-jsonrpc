@@ -1,6 +1,8 @@
 package arca
 
 import (
+	"net/http"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -42,4 +44,23 @@ type JSONRPCServerWS struct {
 	connections map[*websocket.Conn]chan *JSONRPCresponse
 	tick        chan bool
 	handlers    map[string]map[string]*JSONRequestHandler
+	transport   connectWithWS
+}
+
+type connectWithWS struct {
+	upgradeConnection func(
+		w http.ResponseWriter,
+		r *http.Request,
+	) (*websocket.Conn, error)
+	readJSON func(
+		conn *websocket.Conn,
+		request *JSONRPCrequest,
+	) error
+	writeJSON func(
+		conn *websocket.Conn,
+		response *JSONRPCresponse,
+	) error
+	closeConnection func(
+		conn *websocket.Conn,
+	) error
 }

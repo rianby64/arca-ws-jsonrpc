@@ -1,47 +1,21 @@
 package arca
 
 import (
-	"net/http"
-
 	"github.com/gorilla/websocket"
 )
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  64,
-	WriteBufferSize: 64,
-}
-
-var upgradeConnection func(
-	w http.ResponseWriter,
-	r *http.Request,
-) (*websocket.Conn, error)
-
-var readJSON func(
-	conn *websocket.Conn,
-	request *JSONRPCrequest,
-) error
-
-var writeJSON func(
-	conn *websocket.Conn,
-	response *JSONRPCresponse,
-) error
-
-var closeConnection func(
-	conn *websocket.Conn,
-) error
 
 func (s *JSONRPCServerWS) readJSON(
 	conn *websocket.Conn,
 	request *JSONRPCrequest,
 ) error {
-	return readJSON(conn, request)
+	return s.transport.readJSON(conn, request)
 }
 
 func (s *JSONRPCServerWS) writeJSON(
 	conn *websocket.Conn,
 	response *JSONRPCresponse,
 ) error {
-	err := writeJSON(conn, response)
+	err := s.transport.writeJSON(conn, response)
 	s.tick <- true
 	return err
 }
@@ -53,7 +27,7 @@ func (s *JSONRPCServerWS) closeConnection(
 		s.connections[conn] <- nil
 	})()
 	delete(s.connections, conn)
-	return closeConnection(conn)
+	return s.transport.closeConnection(conn)
 }
 
 // Broadcast whatever
