@@ -1,2 +1,2 @@
-# arca-ws-jsonrpc-crud
-Arca en tcp/websockets, abstrayendo CRUD mediante JSON-RPC
+# arca-ws-jsonrpc
+Arca en tcp/websockets mediante JSON-RPC
