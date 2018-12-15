@@ -1,2 +1,2 @@
 # arca-ws-jsonrpc
-Arca en tcp/websockets mediante JSON-RPC
+Arca en websockets mediante JSON-RPC
