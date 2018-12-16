@@ -29,6 +29,8 @@ func (s *JSONRPCServerWS) listenAndResponse(
 			return
 		}
 
-		s.sendResponse(conn, &request, &result)
+		if result != nil {
+			s.sendResponse(conn, &request, &result)
+		}
 	}
 }
