@@ -1,7 +1,6 @@
 package arca
 
 import (
-	"log"
 	"net/http"
 )
 
@@ -9,18 +8,17 @@ import (
 func (s *JSONRPCServerWS) Handle(
 	w http.ResponseWriter,
 	r *http.Request,
-) {
+) error {
 	if s.connections == nil ||
 		s.tick == nil {
 		s.Init()
 	}
 	conn, err := s.transport.upgradeConnection(w, r)
 	if err != nil {
-		log.Println("connecting", err)
-		return
+		return err
 	}
 
 	done := make(chan error)
 	go s.listenAndResponse(conn, done)
-	log.Println(<-done)
+	return <-done
 }
