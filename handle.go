@@ -18,7 +18,5 @@ func (s *JSONRPCServerWS) Handle(
 		return err
 	}
 
-	done := make(chan error)
-	go s.listenAndResponse(conn, done)
-	return <-done
+	return s.listenAndResponse(conn)
 }

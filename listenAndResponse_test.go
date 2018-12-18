@@ -16,15 +16,13 @@ func Test_listenAndResponse_readJSON_returning_error(t *testing.T) {
 	}
 
 	conn := &websocket.Conn{}
-	done := make(chan error)
 	expectedDone := errors.New("EOF")
 
 	s.transport.readJSON = func(_ *websocket.Conn, request *JSONRPCrequest) error {
 		return expectedDone
 	}
 
-	go s.listenAndResponse(conn, done)
-	err := <-done
+	err := s.listenAndResponse(conn)
 
 	_, ok := s.connections[conn]
 	if ok {
@@ -44,7 +42,6 @@ func Test_listenAndResponse_matchHandler_error(t *testing.T) {
 	}
 
 	conn := &websocket.Conn{}
-	done := make(chan error)
 	expectedDone := errors.New("EOF")
 	alreadyReadedJSON := false
 
@@ -72,8 +69,7 @@ func Test_listenAndResponse_matchHandler_error(t *testing.T) {
 		},
 	}
 
-	go s.listenAndResponse(conn, done)
-	err := <-done
+	err := s.listenAndResponse(conn)
 
 	_, ok := s.connections[conn]
 	if ok {
@@ -93,7 +89,6 @@ func Test_listenAndResponse_matchHandler_with_nil_handler_error(t *testing.T) {
 	}
 
 	conn := &websocket.Conn{}
-	done := make(chan error)
 	expectedDone := errors.New("EOF")
 	alreadyReadedJSON := false
 
@@ -115,8 +110,7 @@ func Test_listenAndResponse_matchHandler_with_nil_handler_error(t *testing.T) {
 		},
 	}
 
-	go s.listenAndResponse(conn, done)
-	err := <-done
+	err := s.listenAndResponse(conn)
 
 	_, ok := s.connections[conn]
 	if ok {
@@ -136,7 +130,6 @@ func Test_listenAndResponse_readJSON_matchHandler_OK(t *testing.T) {
 	}
 
 	conn := &websocket.Conn{}
-	done := make(chan error)
 	expectedDone := errors.New("EOF")
 	expectedResult := "my result"
 	var actualResult string
@@ -172,8 +165,7 @@ func Test_listenAndResponse_readJSON_matchHandler_OK(t *testing.T) {
 		},
 	}
 
-	go s.listenAndResponse(conn, done)
-	err := <-done
+	err := s.listenAndResponse(conn)
 
 	_, ok := s.connections[conn]
 	if ok {
@@ -183,6 +175,7 @@ func Test_listenAndResponse_readJSON_matchHandler_OK(t *testing.T) {
 		t.Error("unexpected done")
 	}
 	if actualResult != expectedResult {
-		t.Error("expected result differs from actual result")
+		t.Errorf("expected '%s' result differs from actual '%s' result",
+			expectedDone, actualResult)
 	}
 }

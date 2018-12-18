@@ -11,15 +11,6 @@ func (s *JSONRPCServerWS) writeJSON(
 	return err
 }
 
-// Broadcast whatever
-func (s *JSONRPCServerWS) Broadcast(
-	response *JSONRPCresponse,
-) {
-	for _, conn := range s.connections {
-		conn <- response
-	}
-}
-
 func (s *JSONRPCServerWS) tickResponse(
 	conn *websocket.Conn,
 ) {
@@ -31,5 +22,14 @@ func (s *JSONRPCServerWS) tickResponse(
 		}
 		go s.writeJSON(conn, response)
 		<-s.tick
+	}
+}
+
+// Broadcast whatever
+func (s *JSONRPCServerWS) Broadcast(
+	response *JSONRPCresponse,
+) {
+	for _, conn := range s.connections {
+		conn <- response
 	}
 }
