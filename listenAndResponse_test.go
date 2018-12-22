@@ -24,7 +24,7 @@ func Test_listenAndResponse_readJSON_returning_error(t *testing.T) {
 
 	err := s.listenAndResponse(conn)
 
-	_, ok := s.connections[conn]
+	_, ok := s.connections.Load(conn)
 	if ok {
 		t.Error("conn souldn't be present in connections")
 	}
@@ -71,7 +71,7 @@ func Test_listenAndResponse_matchHandler_error(t *testing.T) {
 
 	err := s.listenAndResponse(conn)
 
-	_, ok := s.connections[conn]
+	_, ok := s.connections.Load(conn)
 	if ok {
 		t.Error("conn souldn't be present in connections")
 	}
@@ -112,7 +112,7 @@ func Test_listenAndResponse_matchHandler_with_nil_handler_error(t *testing.T) {
 
 	err := s.listenAndResponse(conn)
 
-	_, ok := s.connections[conn]
+	_, ok := s.connections.Load(conn)
 	if ok {
 		t.Error("conn souldn't be present in connections")
 	}
@@ -167,7 +167,7 @@ func Test_listenAndResponse_readJSON_matchHandler_OK(t *testing.T) {
 
 	err := s.listenAndResponse(conn)
 
-	_, ok := s.connections[conn]
+	_, ok := s.connections.Load(conn)
 	if ok {
 		t.Error("conn souldn't be present in connections")
 	}

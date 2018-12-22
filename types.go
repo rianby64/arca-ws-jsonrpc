@@ -2,6 +2,7 @@ package arca
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -41,7 +42,7 @@ type JSONRequestHandler func(
 
 // JSONRPCServerWS whatever
 type JSONRPCServerWS struct {
-	connections map[*websocket.Conn]chan *JSONRPCresponse
+	connections sync.Map
 	tick        chan bool
 	handlers    map[string]map[string]*JSONRequestHandler
 	transport   connectWithWS

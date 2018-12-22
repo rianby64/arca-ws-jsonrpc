@@ -15,7 +15,12 @@ func (s *JSONRPCServerWS) tickResponse(
 	conn *websocket.Conn,
 ) {
 	for {
-		response, ok := <-s.connections[conn]
+		connChan, ok := s.connections.Load(conn)
+		if !ok {
+			s.tick <- false
+			break
+		}
+		response, ok := <-connChan.(chan *JSONRPCresponse)
 		if response == nil || !ok {
 			s.tick <- false
 			break
@@ -29,7 +34,8 @@ func (s *JSONRPCServerWS) tickResponse(
 func (s *JSONRPCServerWS) Broadcast(
 	response *JSONRPCresponse,
 ) {
-	for _, conn := range s.connections {
-		conn <- response
-	}
+	s.connections.Range(func(_, conn interface{}) bool {
+		conn.(chan *JSONRPCresponse) <- response
+		return true
+	})
 }

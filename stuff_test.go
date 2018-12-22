@@ -17,9 +17,6 @@ func createServer(t *testing.T) *JSONRPCServerWS {
 		t.Error("Init() should initiate tick channel")
 	}
 
-	if s.connections == nil {
-		t.Error("Init() should initiate connections map")
-	}
 	return &s
 }
 
@@ -51,14 +48,15 @@ func Test_closeConnection_redefinition(t *testing.T) {
 	}
 
 	conn := &websocket.Conn{}
-	s.connections[conn] = make(chan *JSONRPCresponse)
+	s.connections.Store(conn, make(chan *JSONRPCresponse))
 	s.closeConnection(conn)
 
 	if !closeConnectionCalled {
 		t.Error("closeConnection call failed")
 	}
 
-	if s.connections[conn] != nil {
+	_, ok := s.connections.Load(conn)
+	if ok {
 		t.Error("closeConnection should delete the connection conn")
 	}
 }
@@ -79,9 +77,10 @@ func Test_sendResponse_with_ID(t *testing.T) {
 	request.Method = "method"
 	request.ID = "an-id"
 
-	s.connections[conn] = make(chan *JSONRPCresponse)
+	s.connections.Store(conn, make(chan *JSONRPCresponse))
 	go s.sendResponse(conn, &request, &expectedResult)
-	response := <-s.connections[conn]
+	connChan, _ := s.connections.Load(conn)
+	response := <-connChan.(chan *JSONRPCresponse)
 	actualResult := response.Result
 
 	if actualResult.(string) != expectedResult.(string) {
@@ -113,15 +112,16 @@ func Test_sendResponse_without_ID(t *testing.T) {
 	request.Method = "method"
 	request.ID = ""
 
-	s.connections[conn1] = make(chan *JSONRPCresponse)
-	s.connections[conn2] = make(chan *JSONRPCresponse)
+	s.connections.Store(conn1, make(chan *JSONRPCresponse))
+	s.connections.Store(conn2, make(chan *JSONRPCresponse))
 
 	go s.sendResponse(nil, &request, &expectedResult)
 
 	var response1 *JSONRPCresponse
 	var actualResult1 interface{}
 	go (func() {
-		response1 = <-s.connections[conn1]
+		connChan, _ := s.connections.Load(conn1)
+		response1 = <-connChan.(chan *JSONRPCresponse)
 		actualResult1 = response1.Result
 		wg.Done()
 	})()
@@ -129,7 +129,8 @@ func Test_sendResponse_without_ID(t *testing.T) {
 	var response2 *JSONRPCresponse
 	var actualResult2 interface{}
 	go (func() {
-		response2 = <-s.connections[conn2]
+		connChan, _ := s.connections.Load(conn2)
+		response2 = <-connChan.(chan *JSONRPCresponse)
 		actualResult2 = response2.Result
 		wg.Done()
 	})()
@@ -172,9 +173,5 @@ func Test_call_Init_from_Handle(t *testing.T) {
 
 	if s.tick == nil {
 		t.Error("Init() should initiate tick channel")
-	}
-
-	if s.connections == nil {
-		t.Error("Init() should initiate connections map")
 	}
 }

@@ -30,7 +30,7 @@ func Test_tickResponse_1call(t *testing.T) {
 
 	s := *createServer(t)
 	conn := &websocket.Conn{}
-	s.connections[conn] = make(chan *JSONRPCresponse)
+	s.connections.Store(conn, make(chan *JSONRPCresponse))
 
 	var actualResponse JSONRPCresponse
 	expectedResponse := JSONRPCresponse{}
@@ -43,8 +43,9 @@ func Test_tickResponse_1call(t *testing.T) {
 	}
 
 	go s.tickResponse(conn)
-	s.connections[conn] <- &expectedResponse
-	s.connections[conn] <- nil
+	connChan, _ := s.connections.Load(conn)
+	connChan.(chan *JSONRPCresponse) <- &expectedResponse
+	connChan.(chan *JSONRPCresponse) <- nil
 
 	if expectedResponse.Method != actualResponse.Method ||
 		expectedResponse.ID != actualResponse.ID {
@@ -61,7 +62,8 @@ func Test_tickResponse_2call(t *testing.T) {
 
 	s := *createServer(t)
 	conn := &websocket.Conn{}
-	s.connections[conn] = make(chan *JSONRPCresponse)
+	connChan := make(chan *JSONRPCresponse)
+	s.connections.Store(conn, connChan)
 
 	var actualResponse1 JSONRPCresponse
 	var actualResponse2 JSONRPCresponse
@@ -85,9 +87,9 @@ func Test_tickResponse_2call(t *testing.T) {
 	}
 
 	go s.tickResponse(conn)
-	s.connections[conn] <- &expectedResponse1
-	s.connections[conn] <- &expectedResponse2
-	s.connections[conn] <- nil
+	connChan <- &expectedResponse1
+	connChan <- &expectedResponse2
+	connChan <- nil
 
 	if expectedResponse1.Method != actualResponse1.Method ||
 		expectedResponse1.ID != actualResponse1.ID {
@@ -115,9 +117,9 @@ func Test_Broadcast(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	conn1 := &websocket.Conn{}
-	s.connections[conn1] = make(chan *JSONRPCresponse)
+	s.connections.Store(conn1, make(chan *JSONRPCresponse))
 	conn2 := &websocket.Conn{}
-	s.connections[conn2] = make(chan *JSONRPCresponse)
+	s.connections.Store(conn2, make(chan *JSONRPCresponse))
 
 	expectedResponse := JSONRPCresponse{}
 	expectedResponse.Method = "method"
@@ -127,13 +129,15 @@ func Test_Broadcast(t *testing.T) {
 
 	var actualResponse1 *JSONRPCresponse
 	go (func() {
-		actualResponse1 = <-s.connections[conn1]
+		connChan, _ := s.connections.Load(conn1)
+		actualResponse1 = <-connChan.(chan *JSONRPCresponse)
 		wg.Done()
 	})()
 
 	var actualResponse2 *JSONRPCresponse
 	go (func() {
-		actualResponse2 = <-s.connections[conn2]
+		connChan, _ := s.connections.Load(conn2)
+		actualResponse2 = <-connChan.(chan *JSONRPCresponse)
 		wg.Done()
 	})()
 	wg.Wait()
