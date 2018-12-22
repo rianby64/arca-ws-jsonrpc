@@ -5,7 +5,6 @@ import "github.com/gorilla/websocket"
 func (s *JSONRPCServerWS) listenAndResponse(
 	conn *websocket.Conn,
 ) error {
-	//s.connections[conn] = make(chan *JSONRPCresponse)
 	s.connections.Store(conn, make(chan *JSONRPCresponse))
 	go s.tickResponse(conn)
 	for {

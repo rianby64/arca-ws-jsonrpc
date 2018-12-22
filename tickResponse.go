@@ -1,6 +1,8 @@
 package arca
 
-import "github.com/gorilla/websocket"
+import (
+	"github.com/gorilla/websocket"
+)
 
 func (s *JSONRPCServerWS) writeJSON(
 	conn *websocket.Conn,
@@ -15,18 +17,21 @@ func (s *JSONRPCServerWS) tickResponse(
 	conn *websocket.Conn,
 ) {
 	for {
-		connChan, ok := s.connections.Load(conn)
-		if !ok {
-			s.tick <- false
+		for {
+			connChan, ok := s.connections.Load(conn)
+			if !ok {
+				s.tick <- false
+				break
+			}
+			response, ok := <-connChan.(chan *JSONRPCresponse)
+			if response == nil || !ok {
+				s.tick <- false
+				break
+			}
+			go s.writeJSON(conn, response)
+			<-s.tick
 			break
 		}
-		response, ok := <-connChan.(chan *JSONRPCresponse)
-		if response == nil || !ok {
-			s.tick <- false
-			break
-		}
-		go s.writeJSON(conn, response)
-		<-s.tick
 	}
 }
 

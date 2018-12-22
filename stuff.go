@@ -14,8 +14,14 @@ func (s *JSONRPCServerWS) readJSON(
 func (s *JSONRPCServerWS) closeConnection(
 	conn *websocket.Conn,
 ) error {
-	connChan, _ := s.connections.Load(conn)
-	close(connChan.(chan *JSONRPCresponse))
+	for {
+		connChan, ok := s.connections.Load(conn)
+		if !ok {
+			break
+		}
+		close(connChan.(chan *JSONRPCresponse))
+		break
+	}
 	s.connections.Delete(conn)
 	return s.transport.closeConnection(conn)
 }
@@ -32,8 +38,14 @@ func (s *JSONRPCServerWS) sendResponse(
 
 	if len(request.ID) > 0 {
 		response.ID = request.ID
-		connChan, _ := s.connections.Load(conn)
-		connChan.(chan *JSONRPCresponse) <- &response
+		for {
+			connChan, ok := s.connections.Load(conn)
+			if !ok {
+				break
+			}
+			connChan.(chan *JSONRPCresponse) <- &response
+			break
+		}
 	} else {
 		s.Broadcast(&response)
 	}
