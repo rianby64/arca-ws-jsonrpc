@@ -14,6 +14,9 @@ func (s *JSONRPCServerWS) readJSON(
 func (s *JSONRPCServerWS) closeConnection(
 	conn *websocket.Conn,
 ) error {
+	go (func() {
+		s.tick <- false
+	})()
 	for {
 		connChan, ok := s.connections.Load(conn)
 		if !ok {
