@@ -5,7 +5,7 @@ import (
 )
 
 // Handle whatever
-func (s *JSONRPCServerWS) Handle(
+func (s *JSONRPCExtensionWS) Handle(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {

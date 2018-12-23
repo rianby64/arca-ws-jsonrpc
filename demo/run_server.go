@@ -12,7 +12,7 @@ import (
 
 func runServer() {
 
-	ws := arca.JSONRPCServerWS{}
+	ws := arca.JSONRPCExtensionWS{}
 
 	goods := grid.Grid{}
 	users := grid.Grid{}

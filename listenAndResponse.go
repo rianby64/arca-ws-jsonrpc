@@ -1,8 +1,10 @@
 package arca
 
-import "github.com/gorilla/websocket"
+import (
+	"github.com/gorilla/websocket"
+)
 
-func (s *JSONRPCServerWS) listenAndResponse(
+func (s *JSONRPCExtensionWS) listenAndResponse(
 	conn *websocket.Conn,
 ) error {
 	s.connections.Store(conn, make(chan *JSONRPCresponse))

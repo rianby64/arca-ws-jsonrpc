@@ -4,32 +4,26 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (s *JSONRPCServerWS) readJSON(
+func (s *JSONRPCExtensionWS) readJSON(
 	conn *websocket.Conn,
 	request *JSONRPCrequest,
 ) error {
 	return s.transport.readJSON(conn, request)
 }
 
-func (s *JSONRPCServerWS) closeConnection(
+func (s *JSONRPCExtensionWS) closeConnection(
 	conn *websocket.Conn,
 ) error {
-	go (func() {
-		s.tick <- false
-	})()
-	for {
-		connChan, ok := s.connections.Load(conn)
-		if !ok {
-			break
-		}
+	err := s.transport.closeConnection(conn)
+	connChan, ok := s.connections.Load(conn)
+	if ok {
 		close(connChan.(chan *JSONRPCresponse))
-		break
 	}
 	s.connections.Delete(conn)
-	return s.transport.closeConnection(conn)
+	return err
 }
 
-func (s *JSONRPCServerWS) sendResponse(
+func (s *JSONRPCExtensionWS) sendResponse(
 	conn *websocket.Conn,
 	request *JSONRPCrequest,
 	result *interface{},
@@ -41,13 +35,9 @@ func (s *JSONRPCServerWS) sendResponse(
 
 	if len(request.ID) > 0 {
 		response.ID = request.ID
-		for {
-			connChan, ok := s.connections.Load(conn)
-			if !ok {
-				break
-			}
+		connChan, ok := s.connections.Load(conn)
+		if ok {
 			connChan.(chan *JSONRPCresponse) <- &response
-			break
 		}
 	} else {
 		s.Broadcast(&response)

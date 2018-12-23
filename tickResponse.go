@@ -4,39 +4,35 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (s *JSONRPCServerWS) writeJSON(
+func (s *JSONRPCExtensionWS) writeJSON(
 	conn *websocket.Conn,
 	response *JSONRPCresponse,
 ) error {
+	<-s.tick
 	err := s.transport.writeJSON(conn, response)
-	s.tick <- true
+	go (func() { s.tick <- true })()
 	return err
 }
 
-func (s *JSONRPCServerWS) tickResponse(
+func (s *JSONRPCExtensionWS) tickResponse(
 	conn *websocket.Conn,
 ) {
 	for {
-		for {
-			connChan, ok := s.connections.Load(conn)
-			if !ok {
-				s.tick <- false
-				break
-			}
+		connChan, ok := s.connections.Load(conn)
+		if ok {
 			response, ok := <-connChan.(chan *JSONRPCresponse)
 			if response == nil || !ok {
-				s.tick <- false
 				break
 			}
-			go s.writeJSON(conn, response)
-			<-s.tick
+			s.writeJSON(conn, response)
+		} else {
 			break
 		}
 	}
 }
 
 // Broadcast whatever
-func (s *JSONRPCServerWS) Broadcast(
+func (s *JSONRPCExtensionWS) Broadcast(
 	response *JSONRPCresponse,
 ) {
 	s.connections.Range(func(_, conn interface{}) bool {

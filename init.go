@@ -2,7 +2,6 @@ package arca
 
 import (
 	"net/http"
-	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -13,9 +12,12 @@ var upgrader = websocket.Upgrader{
 }
 
 // Init sets up the
-func (s *JSONRPCServerWS) Init() {
-	s.connections = sync.Map{}
-	s.tick = make(chan bool)
+func (s *JSONRPCExtensionWS) Init() {
+	if s.tick == nil {
+		s.tick = make(chan bool)
+		go (func() { s.tick <- true })()
+	}
+
 	if s.handlers == nil {
 		s.handlers = map[string]map[string]*JSONRequestHandler{}
 	}

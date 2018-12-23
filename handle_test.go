@@ -3,20 +3,22 @@ package arca
 import (
 	"errors"
 	"net/http"
+	"sync"
 	"testing"
 
 	"github.com/gorilla/websocket"
 )
 
 func Test_Handle_upgradeConnection_OK(t *testing.T) {
-	t.Log("Test Handle function")
+	t.Log("Test Handle upgradeConnection function OK")
 
 	s := *createServer(t)
 	s.transport.closeConnection = func(conn *websocket.Conn) error {
 		return nil
 	}
 
-	done := make(chan bool)
+	w := sync.WaitGroup{}
+	w.Add(1)
 	expectedDone := errors.New("EOF")
 	expectedResult := "my result"
 	var actualResult string
@@ -43,7 +45,7 @@ func Test_Handle_upgradeConnection_OK(t *testing.T) {
 
 	s.transport.writeJSON = func(_ *websocket.Conn, response *JSONRPCresponse) error {
 		actualResult = response.Result.(string)
-		done <- true
+		w.Done()
 		return nil
 	}
 
@@ -61,7 +63,7 @@ func Test_Handle_upgradeConnection_OK(t *testing.T) {
 	}
 
 	go s.Handle(nil, nil)
-	<-done
+	w.Wait()
 
 	if actualResult != expectedResult {
 		t.Error("expected result differs from actual result")
@@ -69,7 +71,7 @@ func Test_Handle_upgradeConnection_OK(t *testing.T) {
 }
 
 func Test_Handle_upgradeConnection_error(t *testing.T) {
-	t.Log("Test Handle function")
+	t.Log("Test Handle upgradeConnection function ERROR")
 
 	s := *createServer(t)
 	s.transport.closeConnection = func(conn *websocket.Conn) error {
@@ -109,4 +111,31 @@ func Test_Handle_upgradeConnection_error(t *testing.T) {
 	}
 
 	s.Handle(nil, nil)
+}
+
+func Test_call_Init_from_Handle(t *testing.T) {
+	t.Log("Test call Init from Handle")
+
+	s := JSONRPCExtensionWS{}
+	s.transport.closeConnection = func(conn *websocket.Conn) error {
+		return nil
+	}
+
+	expectedDone := errors.New("EOF")
+	done := make(chan bool)
+
+	s.transport.upgradeConnection = func(
+		http.ResponseWriter,
+		*http.Request,
+	) (*websocket.Conn, error) {
+		done <- true
+		return nil, expectedDone
+	}
+
+	go s.Handle(nil, nil)
+	<-done
+
+	if s.tick == nil {
+		t.Error("Init() should initiate tick channel")
+	}
 }
