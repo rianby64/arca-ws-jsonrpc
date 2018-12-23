@@ -337,32 +337,3 @@ func Test_sendResponse_2conns_3responses_without_ID(t *testing.T) {
 	s.closeConnection(conn1)
 	s.closeConnection(conn2)
 }
-
-/*
-func Test_call_Init_from_Handle(t *testing.T) {
-	t.Log("Test call Init from Handle")
-
-	s := JSONRPCExtensionWS{}
-	s.transport.closeConnection = func(conn *websocket.Conn) error {
-		return nil
-	}
-
-	expectedDone := errors.New("EOF")
-	done := make(chan bool)
-
-	s.transport.upgradeConnection = func(
-		http.ResponseWriter,
-		*http.Request,
-	) (*websocket.Conn, error) {
-		done <- true
-		return nil, expectedDone
-	}
-
-	go s.Handle(nil, nil)
-	<-done
-
-	if s.tick == nil {
-		t.Error("Init() should initiate tick channel")
-	}
-}
-*/
