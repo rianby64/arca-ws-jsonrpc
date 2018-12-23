@@ -1,0 +1,6 @@
+#!/bin/bash
+
+while true
+do
+  inotifywait -qq -r -e create,close_write,modify,move,delete ./ && date --iso-8601=ns && go test -test.timeout 1s
+done

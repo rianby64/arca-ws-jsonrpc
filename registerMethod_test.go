@@ -55,7 +55,7 @@ func Test_registerMethod_without_method(t *testing.T) {
 func Test_registerMethod_no_Init(t *testing.T) {
 	t.Log("RegisterMethod success without calling Init")
 
-	s := JSONRPCServerWS{}
+	s := JSONRPCExtensionWS{}
 	var handler JSONRequestHandler = func(
 		requestParams *interface{},
 		context *interface{},

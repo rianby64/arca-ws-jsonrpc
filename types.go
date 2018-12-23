@@ -40,8 +40,8 @@ type JSONRequestHandler func(
 	context *interface{},
 ) (interface{}, error)
 
-// JSONRPCServerWS whatever
-type JSONRPCServerWS struct {
+// JSONRPCExtensionWS whatever
+type JSONRPCExtensionWS struct {
 	connections sync.Map
 	tick        chan bool
 	handlers    map[string]map[string]*JSONRequestHandler

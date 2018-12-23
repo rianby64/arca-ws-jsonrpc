@@ -3,7 +3,7 @@ package arca
 import "fmt"
 
 // RegisterMethod whatever
-func (s *JSONRPCServerWS) RegisterMethod(
+func (s *JSONRPCExtensionWS) RegisterMethod(
 	source string,
 	method string,
 	handler *JSONRequestHandler,

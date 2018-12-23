@@ -2,7 +2,7 @@ package arca
 
 import "fmt"
 
-func (s *JSONRPCServerWS) matchHandler(
+func (s *JSONRPCExtensionWS) matchHandler(
 	request *JSONRPCrequest,
 ) (*JSONRequestHandler, error) {
 	method := request.Method
