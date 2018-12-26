@@ -16,13 +16,17 @@ func (s *JSONRPCExtensionWS) matchHandler(
 	if !ok {
 		return nil, fmt.Errorf("Context must be an Object")
 	}
-	if contextRequest["source"] == nil {
+	if contextRequest["Source"] == nil && contextRequest["source"] == nil {
 		return nil, fmt.Errorf("Context must define a source")
 	}
-	source, ok := contextRequest["source"].(string)
+	source, ok := contextRequest["Source"].(string)
 	if !ok {
-		return nil, fmt.Errorf(
-			"Context has an incorrect source expecting an string")
+		source1, ok := contextRequest["source"].(string)
+		if !ok {
+			return nil, fmt.Errorf(
+				"Context has an incorrect source expecting an string")
+		}
+		source = source1
 	}
 	if source == "" {
 		return nil, fmt.Errorf(
