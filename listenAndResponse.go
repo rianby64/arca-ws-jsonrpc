@@ -16,19 +16,36 @@ func (s *JSONRPCExtensionWS) listenAndResponse(
 			return err
 		}
 
-		handler, err := s.matchHandler(&request)
-		if err != nil {
-			s.closeConnection(conn)
+		if err := s.processRequest(&request, conn); err != nil {
 			return err
-		}
-		result, err := (*handler)(&request.Params, &request.Context)
-		if err != nil {
-			s.closeConnection(conn)
-			return err
-		}
-
-		if result != nil {
-			s.sendResponse(conn, &request, &result)
 		}
 	}
+}
+
+func (s *JSONRPCExtensionWS) processRequest(
+	request *JSONRPCrequest,
+	conn *websocket.Conn,
+) error {
+	handler, err := s.matchHandler(request)
+	if err != nil {
+		s.closeConnection(conn)
+		return err
+	}
+	result, err := (*handler)(&request.Params, &request.Context)
+	if err != nil {
+		s.closeConnection(conn)
+		return err
+	}
+
+	if result != nil {
+		s.sendResponse(conn, request, &result)
+	}
+	return nil
+}
+
+// ProcessRequest whatever
+func (s *JSONRPCExtensionWS) ProcessRequest(
+	request *JSONRPCrequest,
+) error {
+	return s.processRequest(request, nil)
 }
